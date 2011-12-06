@@ -29,11 +29,12 @@ namespace Sparc\Data;
 class DataAbstraction extends Data
 {
     protected $data_adaptor;
+    protected $database;
 
     protected $debug;
 
     protected $action;
-    protected $fields;
+    protected $fields = array();
     protected $table;
     protected $table_alias;
     protected $where;
@@ -41,7 +42,7 @@ class DataAbstraction extends Data
     protected $statement;
     protected $result;
     protected $join;
-    protected $table_as = array();
+    protected $table_as;
     
     
     protected $last_error;
@@ -51,6 +52,7 @@ class DataAbstraction extends Data
     public function __construct(DataAdaptor $dba)
     {
         $this->data_adaptor = $dba;
+        $this->database     = $dba->getDatabase();
         parent::__construct($dba->getDSN(), $dba->getUser(), $dba->getPass());
     }
 
@@ -58,13 +60,13 @@ class DataAbstraction extends Data
     {
         if (is_array($fields))
         {
-            $this->fields = implode(', ', $fields);
+            $this->fields = $fields;
         } else {
             $this->fields = '*';
         }
         $table_as = substr($table, 0, 3);
-        $this->table_as[$table_as] = $table_as;
-        $this->table  = $table;
+        $table_as = $this->setTableAlias($table);
+        $this->table = $table;
         $this->table_alias = $table_as;
         $this->action = "SELECT";
         return $this;
@@ -102,7 +104,7 @@ class DataAbstraction extends Data
     public function join($table, $field) 
     {
         if ($this->join == '') {
-            $table_as = $this->joinerCheck($table);
+            $table_as = $this->setTableAlias($table);
             $this->join = "JOIN $table $table_as ON (".$this->table_alias.".$field = ".$table_as.".$field) ";
         } else {
             $this->join[] = " JOIN $table $table_as ON (".$this->table_alias.".$field = ".$table_as.".$field) ";
@@ -114,8 +116,13 @@ class DataAbstraction extends Data
         
     }
 
-    protected function joinerCheck($table)
+    protected function setTableAlias($table)
     {
+        // Checks if alias already exists
+        if (in_array($table, $this->table_as)) {
+            return array_search($table, $this->table_as);
+        }
+        
         $table_as = substr($table, 0, 3);
         
         if (isset($this->table_as[$table_as])) {
@@ -125,13 +132,37 @@ class DataAbstraction extends Data
                return $table_as;
             } else {
                 $table_as = rand(1, 10000);
-                $this->table_as[$table_as] = $table_as;
+                $this->table_as[$table_as] = $table;
             }            
         } else {
-            $this->table_as[$table_as] = $table_as;
+            $this->table_as[$table_as] = $table;
             return $table_as;
         }
 
+    }
+
+    protected function changedDB($table)
+    {
+        $table = explode('.', $table);
+        if (is_array($table)) {
+            $database = array_pop($table);
+            if ($database != $this->database) {
+                $this->database = $database;
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    protected function getTableAlias($table)
+    {
+        if (in_array($table, $this->table_as)) {
+            return array_search($table, $this->table_as);
+        } else {
+            return '';
+        }
+        
     }
 
     public function getRowCount() 

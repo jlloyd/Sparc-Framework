@@ -80,6 +80,11 @@ class DataAdapter extends DataAbstraction
         $this->pass = $pass;
     }
     
+    protected function getDatabase()
+    {
+        return $this->database;
+    }
+    
     protected function getDSN()
     {
         return $this->driver.':dbname='.$this->db.';host='.$this->host;

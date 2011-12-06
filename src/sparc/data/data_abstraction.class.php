@@ -30,10 +30,23 @@ class DataAbstraction extends Data
 {
     protected $data_adaptor;
 
+    protected $debug;
+
+    protected $action;
+    protected $fields;
+    protected $table;
+    protected $table_alias;
+    protected $where;
     protected $query;
     protected $statement;
     protected $result;
+    protected $join;
+    protected $table_as = array();
+    
+    
     protected $last_error;
+    protected $use_transaction;
+    protected $transaction_depth;
 
     public function __construct(DataAdaptor $dba)
     {
@@ -41,5 +54,141 @@ class DataAbstraction extends Data
         parent::__construct($dba->getDSN(), $dba->getUser(), $dba->getPass());
     }
 
+    public function select($table, array $fields = null) 
+    {
+        if (is_array($fields))
+        {
+            $this->fields = implode(', ', $fields);
+        } else {
+            $this->fields = '*';
+        }
+        $table_as = substr($table, 0, 3);
+        $this->table_as[$table_as] = $table_as;
+        $this->table  = $table;
+        $this->table_alias = $table_as;
+        $this->action = "SELECT";
+        return $this;
+    }
+
+    public function update($table, array $fields)
+    {
+        $this->action = "UPDATE";
+        $table_as = substr($table, 0, 3);
+        $this->table_as[$table_as] = $table_as;
+        $this->table  = $table;
+        $this->table_alias = $table_as;
+        $this->fields = implode(', ', $fields);
+        return $this;
+    }
+
+    public function insert($table, array $fields)
+    {
+        $this->action = "INSERT";
+        $table_as = substr($table, 0, 3);
+        $this->table_as[$table_as] = $table_as;
+        $this->table  = $table;
+        $this->table_alias = $table_as;
+        $this->fields = implode(', ', $fields);
+        return $this;
+    }
+    
+    public function delete($table)
+    {
+        $this->action = "DELETE";
+        $this->table  = $table;
+        return $this;
+    }
+
+    public function join($table, $field) 
+    {
+        if ($this->join == '') {
+            $table_as = $this->joinerCheck($table);
+            $this->join = "JOIN $table $table_as ON (".$this->table_alias.".$field = ".$table_as.".$field) ";
+        } else {
+            $this->join[] = " JOIN $table $table_as ON (".$this->table_alias.".$field = ".$table_as.".$field) ";
+        }
+    }
+
+    public function execute()
+    {
+        
+    }
+
+    protected function joinerCheck($table)
+    {
+        $table_as = substr($table, 0, 3);
+        
+        if (isset($this->table_as[$table_as])) {
+            if (!isset($this->table_as[substr($table, 0, 4)])) {
+               $table_as = substr($table, 0, 4);
+               $this->table_as[$table_as] = $table_as;
+               return $table_as;
+            } else {
+                $table_as = rand(1, 10000);
+                $this->table_as[$table_as] = $table_as;
+            }            
+        } else {
+            $this->table_as[$table_as] = $table_as;
+            return $table_as;
+        }
+
+    }
+
+    public function getRowCount() 
+    {
+        return $this->rowCount();
+    }
+
+    public function fetchArray() 
+    {
+        
+    }
+
+    public function fetchFirst()
+    {
+        
+    }
+
+    protected function buildQuery()
+    {
+        switch ($this->action) {
+            case 'SELECT':
+                return '';
+                break;
+            case 'INSERT':
+                return '';
+                break;
+            case 'UPDATE':
+                return '';
+                break;
+            case 'DELETE':
+                return '';
+                break;
+        }
+    }
+
+    protected function bind(array $fields, array $bind) 
+    {
+        foreach ($fields as $field) {
+            
+            if (isset($bind[$field])) {
+                
+            }
+        }
+    }
+
+    public function debug()
+    {
+        $this->debug = true;
+    }
+
+    protected function reset()
+    {
+        unset($this->action);
+        unset($this->fields);
+        unset($this->query);
+        unset($this->table);
+        unset($this->where);
+    }
 }
  

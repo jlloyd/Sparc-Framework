@@ -30,7 +30,9 @@ namespace Sparc\Cache;
 abstract class Cache
 {
 	protected $cache;
-	
+	protected $cache_loaded;
+    protected $ttl;
+    
 	public function __construct()
 	{
 		
@@ -44,5 +46,8 @@ abstract class Cache
 	
 	abstract protected function fetch();
 	
-	abstract protected function check();
+	protected function checkCache() 
+    {
+        $this->cache_loaded = extension_loaded('apc');
+    }
 }

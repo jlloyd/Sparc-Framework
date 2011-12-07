@@ -29,20 +29,49 @@ namespace Sparc\Cache;
 class CacheManager extends Cache
 {
 
-    public function add($key, $value)
+    public function add($key, $value, $ttl = 60)
     {
+        if ($this->cache_loaded) {
+            
+            if (apc_add($key, $value)) {
+                return true;
+            } else {
+                throw new \Exception("Unable to store $key in cache");
+            }
+        }
 
-        apc_add($key, $value);
     }
 
-    public function addArray(array $key, $value)
+    public function delete($key)
     {
+        if ($this->cache_loaded) {
+            if ($this->exists($key)) {
+                apc_delete($key);
+            }
+
+        }
+    }
+
+    public function addArray(array $array, $ttl = 60)
+    {
+
+        foreach ($array as $key => $value) {
+            if (!$this->exists($key)) {
+                apc_add($key, $value, $ttl);
+            }
+
+        }
 
     }
 
-    public function keyExists()
+    public function exists($key)
     {
+        return apc_exists($key);
+    }
 
+    public function flushCache($cache_type = 'system')
+    {
+        apc_clear_cache($cache_type);
     }
 
     public function cacheSession($session, $name)

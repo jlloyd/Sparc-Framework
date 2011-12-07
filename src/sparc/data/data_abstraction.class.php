@@ -39,7 +39,6 @@ class DataAbstraction extends Data
     protected $table_alias;
     protected $where;
     protected $query;
-    protected $statement;
     protected $result;
     protected $join;
     protected $table_as;
@@ -48,6 +47,7 @@ class DataAbstraction extends Data
     protected $last_error;
     protected $use_transaction;
     protected $transaction_depth;
+    protected $statement_object;
 
     public function __construct(DataAdaptor $dba)
     {
@@ -58,8 +58,7 @@ class DataAbstraction extends Data
 
     public function select($table, array $fields = null) 
     {
-        if (is_array($fields))
-        {
+        if (is_array($fields)) {
             $this->fields = $fields;
         } else {
             $this->fields = '*';
@@ -113,7 +112,8 @@ class DataAbstraction extends Data
 
     public function execute()
     {
-        
+        $this->query = $this->buildQuery();
+        $this->statement_object = $this->database->prepare($this->query);
     }
 
     protected function setTableAlias($table)

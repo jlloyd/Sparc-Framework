@@ -26,18 +26,34 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  **/
 namespace Sparc\Registry;
+use Sparc\Config\Config;
 class RegistryManager extends Registry
 {
     protected $registry = array();
-
+    
     protected function __construct()
     {
 
     }
 
+    public function setConfig($key, Config $object) 
+    {
+        $this->config[$key] = $object;
+    }
+
+    public function getConfig($class)
+    {
+        if (isset($this->config[$class]))
+        {
+            return $this->config[$class];
+        } else {
+            return null;
+        }
+    }
+
     public function setValue($key, $value)
     {
-        $registry[$key] = $value;
+        $this->registry[$key] = $value;
         return $this;
     }
 

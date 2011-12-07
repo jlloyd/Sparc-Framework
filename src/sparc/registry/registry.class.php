@@ -31,6 +31,11 @@ abstract class Registry
 {
 	protected static $instance;
 	
+    protected function __construct()
+    {
+        
+    }
+    
 	public static function getInstance()
 	{
 		if(!self::$instance) {

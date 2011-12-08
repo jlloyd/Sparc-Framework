@@ -28,20 +28,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace Sparc\Form;
 abstract class Form
 {
-    protected $_get;
-    protected $_post;
-    protected $_request;
+    protected $get;
+    protected $post;
+    protected $request;
     protected $is_escaped = false;
+    protected static $instance;
     public function __construct()
     {
         if (isset($_POST)) {
-            $this->_get = $_GET;
+            $this->get = $_GET;
         }
         if (isset($_POST)) {
-            $this->_post = $_POST;
+            $this->post = $_POST;
         }
         if (isset($_REQUESTR)) {
-            $this->_request = $_REQUEST;
+            $this->request = $_REQUEST;
         }
 
         $this->escapeInput();
@@ -50,21 +51,27 @@ abstract class Form
     private function escapeInput()
     {
         $func = array($this, 'escapeSpecialCharacters');
-        array_walk($this->_post, $func);
-        array_walk($this->_get, $func);
-        array_walk($this->_request);
+
         $this->is_escaped = true;
     }
 
     public function escapeSpecialCharacters($key, &$value)
     {
-        if ($this->_strip_tags = true) {
+        
+        if ($this->filter_input == true) {
+            filter_var_array($this->get, FILTER_SANITIZE_ENCODED);
+            unset($_GET);
+            filter_var_array($this->post, FILTER_SANITIZE_ENCODED);
+            unset($_POST);
+        }
+        
+        if ($this->strip_tags == true) {
             strip_tags($value);
         }
 
     }
 
-    public function get($key)
+    public function get($key, $type)
     {
         if (!is_escaped) {
             return false;
@@ -75,9 +82,16 @@ abstract class Form
         }
     }
 
-    public function __call()
+    public function __call($func, $args)
     {
-
+        $func = strtolower($func);
+        if (substr($func, 0, 3) == 'get') {
+            $this->get($args[0], $type);
+        }
     }
-
+    
+    protected function getType($str)
+    {
+        
+    }
 }

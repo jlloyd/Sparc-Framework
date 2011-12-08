@@ -35,15 +35,17 @@ class DataAdapter extends DataAbstraction
         'odbc',
     );
     
-    protected $driver;
-    protected $host;
+    protected $driver = 'mysql';
+    protected $host   = 'localhost';
     protected $db;
     protected $user;
     protected $pass;
     
 	public function __construct($driver = null)
     {
-        
+        if ($driver != null) {
+            $this->driver = $driver;
+        }
     }
     
     public function setDriver($driver)

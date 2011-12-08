@@ -30,6 +30,8 @@ class DataAbstraction extends Data
 {
     protected $data_adaptor;
     protected $database;
+    protected $connection;
+    protected $connected = false;
 
     protected $debug;
 
@@ -45,6 +47,8 @@ class DataAbstraction extends Data
     
     
     protected $last_error;
+    protected $last_query;
+    protected $row_count;
     protected $use_transaction;
     protected $transaction_depth;
     protected $statement_object;
@@ -52,8 +56,35 @@ class DataAbstraction extends Data
     public function __construct(DataAdaptor $dba)
     {
         $this->data_adaptor = $dba;
-        $this->database     = $dba->getDatabase();
-        parent::__construct($dba->getDSN(), $dba->getUser(), $dba->getPass());
+        $this->connect();
+    }
+
+    public function connect()
+    {
+        $this->database   = $this->data_adaptor->getDatabase();
+        $this->connection = parent::__construct($this->data_adaptor->getDSN(), $this->data_adaptor->getUser(), $this->data_adaptor->getPass());
+        $this->connected  = true;
+    }
+
+    public function switchConnection(DataAdaptor $dba)
+    {
+        $this->data_adaptor = $dba;
+        $this->connect();
+    }
+
+    public function isConnected()
+    {
+        if (is_resource($this->connection)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function disconnect()
+    {
+        $this->connection = null;
+        $this->connected = false;
     }
 
     public function select($table, array $fields = null) 
@@ -108,12 +139,30 @@ class DataAbstraction extends Data
         } else {
             $this->join[] = " JOIN $table $table_as ON (".$this->table_alias.".$field = ".$table_as.".$field) ";
         }
+        return $this;
+    }
+
+    public function where()
+    {
+        $this->where = $where;
+    }
+
+    public function limit($offset = 0, $limit = null)
+    {
+        if ($limit = null) {
+            return $offset;
+        } else if ($offset = null) {
+            return '0,'.$limit;
+        } else {
+            return $limit.$offset;
+        }
     }
 
     public function execute()
     {
         $this->query = $this->buildQuery();
         $this->statement_object = $this->database->prepare($this->query);
+        $this->statement_object->execute($this->where);
     }
 
     protected function setTableAlias($table)
@@ -170,21 +219,31 @@ class DataAbstraction extends Data
         return $this->rowCount();
     }
 
-    public function fetchArray() 
+    public function query($sql, $params)
     {
         
     }
 
+    public function fetchArray() 
+    {
+        return $this->connection->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function fetchFirst()
     {
-        
+        return $this->connection->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function fetchObject($class)
+    {
+        $this->statement_object->fetchObject($class);
     }
 
     protected function buildQuery()
     {
         switch ($this->action) {
             case 'SELECT':
-                return '';
+                return $this->prepareSelect();
                 break;
             case 'INSERT':
                 return '';
@@ -198,14 +257,34 @@ class DataAbstraction extends Data
         }
     }
 
+    protected function prepareSelect()
+    {
+        
+    }
+
+    public function describe()
+    {
+        
+    }
+
+    public function columnType($table, $column)
+    {
+        
+    }
+
     protected function bind(array $fields, array $bind) 
     {
-        foreach ($fields as $field) {
+        foreach ($fields as $field => $value) {
             
             if (isset($bind[$field])) {
-                
+                $this->statement_object->bindParam(':'.$field, $value);
             }
         }
+    }
+
+    public function preview()
+    {
+        return $this->query;
     }
 
     public function debug()

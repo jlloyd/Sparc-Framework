@@ -46,6 +46,14 @@ abstract class Data extends PDO
 	
 	abstract protected function rowUpdate();
 	
-	
+	public function __sleep()
+    {
+        $this->disconnect();
+    }
+    
+    public function __wakeup()
+    {
+        $this->connect();
+    }
 
 }

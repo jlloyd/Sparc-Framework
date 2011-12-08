@@ -26,13 +26,14 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  **/
 namespace Sparc\Controller;
-use Sparc\Dispatcher\Predispatcher as Predispatch;
+use Sparc\Dispatcher\Dispatcher;
+use Sparc\View\View;
 class ControllerManager extends Controller
 {
 
-    public function __construct(Predispatch $router)
+    public function __construct(Dispatcher $dispatcher)
     {
-
+        parent::__construct($dispatcher);
     }
 
     protected function render()
@@ -48,9 +49,19 @@ class ControllerManager extends Controller
 
     }
 
+    public function getDispatcher()
+    {
+        return $this->dispatcher;
+    }
+
     protected function routeAction()
     {
-
+        $controller = $this->dispatcher->getRouter()->getController();
+        $this->controller = new $controller($thia);
+        $method = $this->dispatcher->getRouter()->getMethod();
+        return $this->controller->$method();
+        
+        
     }
 
 }

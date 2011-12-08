@@ -26,15 +26,16 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  **/
 namespace Sparc\Controller;
+use Sparc\Dispatcher\Dispatcher;
 abstract class Controller
 {
 
-    protected $router;
+    protected $dispatcher;
     protected $view;
 
-    public function __construct(Sparc_Router_Base $router)
+    public function __construct(Dispatcher $dispatcher)
     {
-        $this->router = $router;
+        $this->dispatcher = $dispatcher;
     }
 
     abstract protected function render();

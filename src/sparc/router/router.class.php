@@ -36,6 +36,9 @@ abstract class Router
 	protected $params;
 	protected $route;
 	
+    protected $default_controller;
+    protected $default_method;
+    
 	public function __construct()
 	{
 		$this->route = $_SERVER['REQUEST_URI'];

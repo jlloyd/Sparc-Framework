@@ -26,9 +26,9 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  **/
 namespace Sparc\Application;
-use Sparc\Bootstrap;
-use Sparc\Controller;
-use Sparc\Router;
+use Sparc\Bootstrap\Bootstrap;
+use Sparc\Controller\Controller;
+use Sparc\Router\Router;
 class ApplicationManager extends Application
 {
     protected $bootstrap;

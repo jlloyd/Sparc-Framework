@@ -73,6 +73,22 @@ class RouteManager extends Router
     {
         return $this->method;
     }
+    // Sets the controller if no match is found
+    public function setDefaultController($controller)
+    {
+        $this->default_controller = $controller;
+        return $this;
+    }
+
+    /*
+     * Used when no route is matched
+     */
+
+    public function setDefaultAction($method)
+    {
+        $this->default_method = $method;
+        return $this;
+    }
 
     protected function setController($controller)
     {

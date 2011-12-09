@@ -49,7 +49,7 @@ class Loader extends Autoloader
     protected $class_name;
     protected $class_file;
     protected $is_namespaced = false;
-    protected $app_namespace = null;
+    protected $app_namespaces = null;
     protected $app_path;
     protected $file_suffix = '.class.php';
     protected $base_path;
@@ -175,9 +175,9 @@ class Loader extends Autoloader
      * @return object $this
     */
 
-    public function setAppNamespace($namespace)
+    public function setAppNamespace($namespace, $path)
     {
-        $this->app_namespace = $namespace;
+        $this->app_namespace[$namespace] = $path;
         return $this;
     }
 
@@ -311,11 +311,13 @@ class Loader extends Autoloader
 
             $file = preg_split('/(?=[A-Z])/', array_pop($this->class), -1, PREG_SPLIT_NO_EMPTY);
 
-            $file = $this->app_path . strtolower(implode('_', $file));
-            if (is_readable($file . $this->file_suffix)) {
+            $file = strtolower(implode('_', $file));
+            if (is_readable(realpath($this->app_path)  . $file . $this->file_suffix)) {
                 return $file . $this->file_suffix;
-            } else if (is_readable($file . '.php')) {
+            } else if (is_readable(realpath($this->app_path) . $file . '.php')) {
                 return $file . '.php';
+            } else if (is_readable(stream_resolve_include_path($file.$this->file_suffix))) {
+                return stream_resolve_include_path($file.$this->file_suffix);
             } else {
                 throw new AutoloadException;
             }

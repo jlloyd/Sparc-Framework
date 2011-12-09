@@ -24,7 +24,21 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
- **/
+**/
+
+/*
+ * @package Sparc\Autoloader
+ * @copyright Copyright (c) Justin Lloyd 2011
+ * @property $class array Class property
+ * @property $class_name string Class name property
+ * @property $class_file string Class file property
+ * @property $is_namespaced bool Is namespaced property
+ * @property $app_namespace string Application namespace property
+ * @property $app_path string Application namespace property
+ * @property $file_suffix string File suffix property
+ * @property $base_path string
+ */
+
 namespace Sparc\Autoloader;
 use Sparc\Exception\AutoloadException as AutoloadException;
 require "autoloader.class.php";
@@ -34,10 +48,12 @@ class Loader extends Autoloader
     protected $class;
     protected $class_name;
     protected $class_file;
-    protected $namespace = false;
+    protected $is_namespaced = false;
     protected $app_namespace = null;
+    protected $app_path;
     protected $file_suffix = '.class.php';
     protected $base_path;
+    protected $custom_classes;
 
     public function __construct()
     {
@@ -45,13 +61,61 @@ class Loader extends Autoloader
         $this->setLoader();
     }
 
+    /*
+     * Explodes the current directory to return the base framework path
+     * @method getBasePath 
+     * @return string $base_path
+    */
+   
     public function getBasePath()
     {
         $path = explode(DIRECTORY_SEPARATOR, dirname(__FILE__));
         array_pop($path);
-        $this->base_path = implode(DIRECTORY_SEPARATOR, $path);
+        return $this->base_path = implode(DIRECTORY_SEPARATOR, $path);
     }
-
+    
+    /*
+     * Gets path to custom class (if it exists)
+     * @method getCustomClass
+     * @param string $class
+     * @return mixed $path path to custom class or bool false if not matched
+    */
+    
+    public function getCustomClass($class)
+    {
+        if (isset($this->custom_classes[$class])) {
+            return $this->custom_classes[$class];
+        } else {
+            return false;
+        }
+    }
+    
+    /*
+     * Gets path to custom class (if it exists)
+     * @method setCustomClass
+     * @param string $class Class name
+     * @param string $path Class path
+     * @return object $this
+    */
+    
+    public function setCustomClass($class, $path)
+    {
+        if (is_readable($path)) {
+            $this->custom_classes[$class] = $path;
+        } else if (is_readable(realpath($path))) {
+            $this->custom_classes[$class] = realpath($path);
+        } else {
+            throw new \Exception('File '.$path.' path does not exist or is not readable');
+        }
+        return $this;
+    }    
+    
+    /*
+     * Sets the internal autoloader path using spl_autoload_register function
+     * @method setLoader 
+     * @return object $this
+    */
+    
     protected function setLoader()
     {
         $loader = array($this, 'sparcLoader');
@@ -59,8 +123,15 @@ class Loader extends Autoloader
         if (!preg_match('/' . $this->base_path . '/', get_include_path())) {
             set_include_path(get_include_path() . PATH_SEPARATOR . $this->base_path);
         }
+        return $this;
 
     }
+
+    /*
+     * Sets the base path of your application
+     * @method setAppPath 
+     * @return object $this
+    */
 
     public function setAppPath($path)
     {
@@ -74,10 +145,23 @@ class Loader extends Autoloader
         return $this;
     }
 
+    /*
+     * Returns the base app path of your application
+     * @method getAppPath 
+     * @return object $this
+    */
+
+
     public function getAppPath()
     {
         return $this->app_path;
     }
+
+    /*
+     * Change the default file suffix for the autoloader
+     * @method setFileSuffix 
+     * @return object $this
+    */
 
     public function setFileSuffix($suffix)
     {
@@ -85,16 +169,33 @@ class Loader extends Autoloader
         return $this;
     }
 
+    /*
+     * Define the namespace (if used) of your application
+     * @method setAppNamespace 
+     * @return object $this
+    */
+
     public function setAppNamespace($namespace)
     {
         $this->app_namespace = $namespace;
         return $this;
     }
 
+    /*
+     * Checks if class uses a namespace
+     * @method isNamespaced 
+     * @return bool $is_namespaced (If a class uses a namespace)
+    */
+
     protected function isNamespaced()
     {
-        return $this->namespace;
+        return $this->is_namespaced;
     }
+
+    /*
+     * Public wrapper around the sparcLoader method
+     * @method preLoad 
+    */
 
     public function preLoad($class)
     {
@@ -103,44 +204,51 @@ class Loader extends Autoloader
 
     /*
      * Wrapper for non namespaced classes in current namespace
+     * @param string $class Class name
+     * @param bool $pre_load whether or not to preload the class
      * @return bool
      */
 
     public function classExists($class, $pre_load = true)
     {
-        if ($pre_load === true) {
-            $this->preLoad($class);
-        }
+
         $this->class_name = $class;
-        if ($this->isNamespaced()) {
-            return class_exists('\\' . $class, false);
+        if (!$this->isNamespaced()) {
+            return class_exists('\\' . $class, $pre_load);
         } else {
-            return class_exists($class, false);
+            return class_exists($class, $pre_load);
         }
     }
 
-    private function sparcLoader($class)
+    /*
+     * Autoloader wrapper - determins which loader to use based on namespace
+     * @method sparcLoader
+     */
+
+    protected function sparcLoader($class)
     {
         $this->class = explode('\\', $class);
         $this->class_name = $class;
         if (isset($this->class[1])) {
-            $this->namespace = true;
+            $this->is_namespaced = true;
             if ($this->class[0] == 'Sparc') {
+                // Internal loader (Framework) classes
                 $this->class_file = $this->_internalLoader();
             } else {
                 $this->class_file = $this->autoloader();
             }
         } else {
-            $this->namespace = false;
+            $this->is_namespaced = false;
             $this->class_file = $this->autoloader();
         }
-
+        // Checks if class is namespaced
         if ($this->isNamespaced() == false) {
+            // Prepends global namespace if no namespace is used
             echo $this->class_name = '\\' . $this->class_name;
         }
-
+        // Checks if class exists
         if (!class_exists($this->class_name, false)) {
-
+            // Checks if class file is readable
             if (is_readable($this->class_file)) {
                 require $this->class_file;
             }
@@ -148,6 +256,12 @@ class Loader extends Autoloader
 
     }
 
+    /*
+     * Registers additional autoloader functions
+     * @method registerLoader
+     * @return object $this
+     */
+    
     public function registerLoader($loader, $path)
     {
 
@@ -162,9 +276,14 @@ class Loader extends Autoloader
         } else {
             spl_autoload_register($loader);
         }
-
+        return $this;
     }
 
+    /*
+     * Internal autoloader method
+     * @method _internalLoader private autoloader function
+     */
+    
     private function _internalLoader()
     {
         $class = preg_split('/(?=[A-Z])/', array_pop($this->class), -1, PREG_SPLIT_NO_EMPTY);
@@ -175,6 +294,11 @@ class Loader extends Autoloader
 
         return $this->base_path . DIRECTORY_SEPARATOR . strtolower((implode(DIRECTORY_SEPARATOR, $this->class))) . DIRECTORY_SEPARATOR . $filename;
     }
+
+    /*
+     * Application autoloader function
+     * @method autoloader
+     */
 
     protected function autoloader()
     {

@@ -26,22 +26,20 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  **/
 
-/*
+/**
  * @package Sparc\Autoloader
  * @copyright Copyright (c) Justin Lloyd 2011
  * @abstract
  * @property $instance static instance property
  */
-
 namespace Sparc\Autoloader;
 abstract class Autoloader
 {
     protected static $instance;
 
-    /*
+    /**
      * @method getInstance
      */
-
     public static function getInstance()
     {
         if (!self::$instance) {
@@ -55,7 +53,7 @@ abstract class Autoloader
 
     }
     
-    /*
+    /**
      * @abstract
      */
     abstract protected function autoloader();

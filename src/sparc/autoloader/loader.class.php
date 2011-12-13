@@ -161,12 +161,26 @@ class Loader extends Autoloader
 
     /**
      * Define the namespace (if used) of your application
-     * @method setAppNamespace 
+     * @method setAppNamespace
+     * @param string $namespace
+     * @param strin $path
      * @return object $this
     */
     public function setAppNamespace($namespace, $path)
     {
-        $this->app_namespace[$namespace] = $path;
+        $this->app_namespaces[$namespace] = $path;
+        return $this;
+    }
+
+    /**
+     * Define an array of namespaces and their path
+     * @method setAppNamespaces
+     * @return object $this
+    */
+    public function setAppNamespace(array $namespaces)
+    {
+        foreach ($namespaces as $namespace => $path)
+        $this->app_namespaces[$namespace] = $path;
         return $this;
     }
 
@@ -295,7 +309,11 @@ class Loader extends Autoloader
             $file = preg_split('/(?=[A-Z])/', array_pop($this->class), -1, PREG_SPLIT_NO_EMPTY);
 
             $file = strtolower(implode('_', $file));
-            if (is_readable(realpath($this->app_path)  . $file . $this->file_suffix)) {
+            if (isset($this->app_namespaces[$this->class_name]) && is_readable(realpath($this->app_namespaces[$this->class_name]))) {
+                return $this->app_namespaces[$this->class_name];
+            } else if ($this->getCustomClass($this->class_name)) {
+                return $this->getCustomClass($this->class_name);
+            } else if (is_readable(realpath($this->app_path)  . $file . $this->file_suffix)) {
                 return $file . $this->file_suffix;
             } else if (is_readable(realpath($this->app_path) . $file . '.php')) {
                 return $file . '.php';

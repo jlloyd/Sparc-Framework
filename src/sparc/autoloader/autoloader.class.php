@@ -35,10 +35,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace Sparc\Autoloader;
 abstract class Autoloader
 {
+    /**
+     * Autoloader Instance
+     * @var Sparc\Autoloader\Autoloader
+     */
     protected static $instance;
 
     /**
      * @method getInstance
+     * @return Sparc\Autoloader\Autoloader
      */
     public static function getInstance()
     {
@@ -50,7 +55,7 @@ abstract class Autoloader
 
     protected function __construct()
     {
-
+        $var and delete();
     }
     
     /**

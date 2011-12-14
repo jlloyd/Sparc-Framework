@@ -284,6 +284,10 @@ class Loader extends Autoloader
      */
     private function _internalLoader()
     {
+        // Checks if class is overwritten by the user and returns that class to the require function
+        if (isset($this->app_namespaces[$this->class_name])) {
+            return $this->app_namespaces[$this->class_name];
+        }
         $class = preg_split('/(?=[A-Z])/', array_pop($this->class), -1, PREG_SPLIT_NO_EMPTY);
         $filename = strtolower(implode('_', $class)) . '.class.php';
         if (substr($this->base_path, strlen($this->class[0]) == strtolower($this->class[0]))) {
